@@ -1,51 +1,41 @@
-using com.freeclimb;
-using com.freeclimb.percl;
-using com.freeclimb.webhooks.call;
-using Microsoft.AspNetCore.Mvc;
+require('dotenv').config()
+const express = require('express')
+const bodyParser = require('body-parser')
+const app = express()
+const freeclimbSDK = require('@freeclimb/sdk')
 
-namespace IncomingCall.Controllers {
-  [Route ("voice")]
-  [ApiController]
-  public class FreeClimbController : ControllerBase {
+app.use(bodyParser.json())
+var port = process.env.PORT || 80
+const freeclimb = freeclimbSDK()
 
-    [HttpPost("InboundCall")]
-    public ActionResult InboundCall (CallStatusCallback freeClimbRequest) {
-      // Create an empty PerCL script container
-      PerCLScript script = new PerCLScript ();
-      // Verify inbound call is in proper state
-      if (freeClimbRequest.getCallStatus == ECallStatus.Ringing) {
-        // Create PerCL say script with US English as the language
-        Say say = new Say ();
-        say.setLanguage (ELanguage.EnglishUS);
-        // Set prompt to record message
-        say.setText ("Hello. Thank you for invoking the accept incoming call tutorial.");
+// Handles incoming calls
+app.post('/incomingCall', (req, res) => {
 
-        // Add PerCL say script to PerCL container
-        script.Add (say);
+  // Create PerCL say script 
+  const say = freeclimb.percl.say('Hello. Thank you for invoking the accept incoming call tutorial.')
 
-        // Create PerCL pause script with a duration of 100 milliseconds
-        Pause pause = new Pause (100);
+  // Create PerCL pause script with a duration of 100 milliseconds
+  const pause = freeclimb.percl.pause(100)
 
-        // Add PerCL pause script to PerCL container
-        script.Add (pause);
+  // Create PerCL say script
+  const sayGoodbye = freeclimb.percl.say('Goodbye')
 
-        // Create PerCL say script with US English as the language
-        Say sayGoodbye = new Say ();
-        sayGoodbye.setLanguage (ELanguage.EnglishUS);
-        // Set prompt
-        sayGoodbye.setText ("Goodbye.");
+  // Create PerCL hangup script
+  const hangup = freeclimb.percl.hangup()
 
-        // Add PerCL say script to PerCL container
-        script.Add (sayGoodbye);
+  // Build scripts
+  const percl = freeclimb.percl.build(say, pause, sayGoodbye, hangup)
 
-        // Create PerCL hangup script
-        Hangup hangup = new Hangup ();
+  // Convert PerCL container to JSON and append to response
+  res.status(200).json(percl)
+})
 
-        // Add PerCL hangup script to PerCL container
-        script.Add (new Hangup ());
-      }
-      // Convert PerCL container to JSON and append to response
-      return Content (script.toJson (), "application/json");
-    }
-  }
-}
+// Specify this route with 'Status Callback URL' in App Config
+app.post('/status', (req, res) => {
+  // handle status changes
+  res.status(200)
+})
+
+app.listen(port, () => {
+  console.log(`Starting server on port ${port}`)
+})
