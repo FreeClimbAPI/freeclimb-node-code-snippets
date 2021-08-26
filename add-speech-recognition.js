@@ -1,126 +1,59 @@
-using System;
-using System.Collections.Generic;
-using com.freeclimb;
-using com.freeclimb.api;
-using com.freeclimb.api.call;
-using com.freeclimb.percl;
-using com.freeclimb.webhooks.application;
-using com.freeclimb.webhooks.call;
-using com.freeclimb.webhooks.percl;
-using Microsoft.AspNetCore.Mvc;
+require('dotenv').config()
+const express = require('express')
+const bodyParser = require('body-parser')
+const app = express()
+app.use(bodyParser.json())
+const freeclimbSDK = require('@freeclimb/sdk')
 
-namespace SpeechRecognition.Controllers {
-  [Route("/voice")]
-  [ApiController]
-  public class FreeClimbontroller : ControllerBase {
+const port = process.env.PORT || 80
+const host = process.env.HOST
+const accountId = process.env.ACCOUNT_ID
+const apiKey = process.env.API_KEY
+const applicationId = process.env.APPLICATION_ID
+const freeclimb = freeclimbSDK(accountId, apiKey)
 
-    public string AppUrl {
-      get {
-        return System.Environment.GetEnvironmentVariable("HOST");
-      }
-    }
+//Invoke create method to initiate the asynchronous outdial request
+freeclimb.api.calls.create(to, from, applicationId).catch(err => {/** Handle Errors */ })
 
-    [HttpPost ("/CreateCall")]
-    public void CreateCall ([FromBody] string value) {
-      string accountId = System.Environment.GetEnvironmentVariable("ACCOUNT_ID");
-      string apiKey = System.Environment.GetEnvironmentVariable("API_KEY");
-
-      // Set up Call Details
-      string applicationId = System.Environment.GetEnvironmentVariable("APPLICATION_ID");
-      string phoneNumber = "+" + value;
-      string freeclimbPhoneNumber = "Your FreeClimb Number Here";
-
-      try {
-        // Create the FreeClimbClient
-        FreeClimbClient client = new FreeClimbClient (accountId, apiKey);
-        // Create a Call
-        Call call = client.getCallsRequester.create (phoneNumber, // To
-          freeclimbPhoneNumber, // From,
-          applicationId); // Application to Handle the call
-      } catch (FreeClimbException ex) {
-        System.Console.Write (ex.Message);
-      }
-    }
-
-    [HttpPost] // POST /voice
-    public ActionResult SelectColorCallAnswered (CallStatusCallback callStatusCallback) {
-      // Create an empty PerCL script container
-      PerCLScript script = new PerCLScript ();
-      // Verify call is in the InProgress state
-      if (callStatusCallback.getDialCallStatus == ECallStatus.InProgress) {
-        // Create PerCL get speech script (see grammar file content below)
-        string actionUrl = AppUrl + "/voice/SelectColorDone";
-        string grammarFile = AppUrl + "/grammars/FreeClimbColor.xml";
-        GetSpeech getSpeech = new GetSpeech (actionUrl, grammarFile);
-        // Set location and type of grammar as well as the grammar rule
-        getSpeech.setGrammarType (EGrammarType.Url);
-        getSpeech.setGrammarRule ("FreeClimbColor");
-
-        // Create PerCL say script with US English as the language
-        Say say = new Say ();
-        say.setLanguage (ELanguage.EnglishUS);
-        // Set prompt for color selection
-        say.setText ("Please select a color. Select green, red or yellow.");
-
-        // Add PerCL say script to PerCL get speech prompt list
-        getSpeech.setPrompts (say);
-
-        // Add PerCL get speech script to PerCL container
-        script.Add (getSpeech);
-      }
-
-      // Convert PerCL container to JSON and append to response
-      return Content (script.toJson (), "application/json");
-    }
-
-    [HttpPost("SelectColorDone")]
-    public ActionResult SelectColorDone (GetSpeechActionCallback getSpeechStatusCallback) {
-      // Create an empty PerCL script container
-      PerCLScript script = new PerCLScript ();
-
-      // Check if recognition was successful
-      if (getSpeechStatusCallback.getReason == ESpeechTermReason.Recognition) {
-        // Create PerCL say script with US English as the language
-        Say say = new Say ();
-        say.setLanguage (ELanguage.EnglishUS);
-        // Set prompt to speak the selected color
-        say.setText (string.Format ("Selected color was {0}", (getSpeechStatusCallback.getRecognitionResult).ToLower ()));
-
-        // Add PerCL say script to PerCL container
-        script.Add (say);
-      } else {
-        // Create PerCL say script with US English as the language
-        Say say = new Say ();
-        say.setLanguage (ELanguage.EnglishUS);
-        // Set prompt to indicated selection error
-        say.setText ("There was an error in selecting a color.");
-
-        // Add PerCL say script to PerCL container
-        script.Add (say);
-      }
-
-      // Create PerCL pause script with a duration of 100 milliseconds
-      Pause pause = new Pause (100);
-
-      // Add PerCL pause script to PerCL container
-      script.Add (pause);
-
-      // Create PerCL say script with US English as the language
-      Say sayGoodbye = new Say ();
-      sayGoodbye.setLanguage (ELanguage.EnglishUS);
-      // Set prompt
-      sayGoodbye.setText("Goodbye");
-      // Add PerCL say script to PerCL container
-      script.Add (sayGoodbye);
-
-      // Create PerCL hangup script
-      Hangup hangup = new Hangup ();
-
-      // Add PerCL hangup script to PerCL container
-      script.Add (new Hangup ());
-
-      // Convert PerCL container to JSON and append to response
-      return Content (script.toJson (), "application/json");
-    }
+// Handles incoming calls. Set with 'Call Connect URL' in App Config
+app.post('/incomingCall', (req, res) => {
+  const say = freeclimb.percl.say("Please select a color. Select green, red, or yellow.")
+  const options = {
+    grammarType: freeclimb.enums.grammarType.URL,
+    prompts: [say]
   }
-}
+  const getSpeech = freeclimb.percl.getSpeech(`${host}/colorSelectDone`, `${host}/grammarFile`, options)
+  const percl = freeclimb.percl.build(getSpeech)
+  // Convert PerCL container to JSON and append to response
+  res.status(200).json(percl)
+})
+
+app.post('/colorSelectDone', (req, res) => {
+  const getSpeechActionResponse = req.body
+  // Check if recognition was successful
+  if (getSpeechActionResponse.reason === freeclimb.enums.getSpeechReason.RECOGNITION) {
+    // Get the result
+    const color = getSpeechActionResponse.recognitionResult
+    say = freeclimb.percl.say(`Selected color was ${color}`)
+  } else {
+    say = freeclimb.percl.say('There was an error in selecting a color')
+  }
+  const hangup = freeclimb.percl.hangup()
+  const percl = freeclimb.percl.build(say, hangup)
+  res.status(200).json(percl)
+})
+
+app.get('/grammarFile', function (req, res) {
+  const file = `${__dirname}/colorGrammar.xml`
+  res.download(file)
+})
+
+// Specify this route with 'Status Callback URL' in App Config
+app.post('/status', (req, res) => {
+  // handle status changes
+  res.status(200)
+})
+
+app.listen(port, () => {
+  console.log(`Starting server on port ${port}`)
+})
