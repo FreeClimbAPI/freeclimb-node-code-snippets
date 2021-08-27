@@ -1,5 +1,5 @@
 {
-  "name": "node-list-calls-tutorial",
+  "name": "freeclimb-node-code-snippets",
   "version": "1.0.0",
   "dependencies": {
     "@freeclimb/sdk": "^1.0.0",
