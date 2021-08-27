@@ -21,14 +21,6 @@ To get started using a FreeClimb account, follow the instructions [here](https:/
    | ACCOUNT_ID              | Account ID which can be found under [API credentials](https://www.freeclimb.com/dashboard/portal/account/authentication) in Dashboard                                                         |
    | API_KEY              | API key which can be found under [API credentials](https://www.freeclimb.com/dashboard/portal/account/authentication) in Dashboard                                               |
 
-## Runnning the Tutorial
-
-1. Run the application using command:
-
-   ```bash
-   $ node listQueues.js
-   ```
-
 ## Getting Help
 
 If you are experiencing difficulties, [contact support](https://freeclimb.com/support).
