@@ -1,4 +1,4 @@
-# Node - List Queues Tutorial
+# Node - Code Snippets
 
 This project serves as a guide to help you build an application with FreeClimb. View this tutorial on [FreeClimb.com](https://docs.freeclimb.com/docs/list-queues#section-nodejs).
 
