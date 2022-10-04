@@ -3,17 +3,18 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const app = express()
 app.use(bodyParser.json())
-const freeclimbSDK = require('@freeclimb/sdk')
+const { createConfiguration, DefaultApi, MessageRequest } = require('@freeclimb/sdk')
 
 const port = process.env.PORT || 80
 const accountId = process.env.ACCOUNT_ID
 const apiKey = process.env.API_KEY
-const freeclimb = freeclimbSDK(accountId, apiKey)
+const freeclimb = new DefaultApi(createConfiguration({ accountId, apiKey }))
 
 app.post('/incomingSms', (req, res) => {
-  let to = 'example to number'
-  let from = 'example from number'
-  freeclimb.api.messages.create(from, to, 'Hey! It is your application!').catch(err => {console.log(err)})
+  const toNumber = 'example to number'
+  const fromNumber = 'example from number'
+
+  freeclimb.sendAnSmsMessage(new MessageRequest({ fromNumber, toNumber, text: 'Hey! It is your application!' })).catch(err => {console.log(err)})
 })
 
 // Specify this route with 'Status Callback URL' in App Config

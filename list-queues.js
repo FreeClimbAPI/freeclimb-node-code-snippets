@@ -1,10 +1,10 @@
 require('dotenv').config()
-const freeclimbSDK = require('@freeclimb/sdk')
+const { createConfiguration, DefaultApi } = require('@freeclimb/sdk')
 
 const accountId = process.env.ACCOUNT_ID
 const apiKey = process.env.API_KEY
 // your freeclimb API key (available in the Dashboard) - be sure to set up environment variables to store these values
-const freeclimb = freeclimbSDK(accountId, apiKey)
+const freeclimb = new DefaultApi(createConfiguration({ accountId, apiKey }))
 
 getQueues().then(queues => {
   // Use Queues
@@ -16,17 +16,10 @@ getQueues().then(queues => {
 
 async function getQueues() {
   // Create array to store all queues
-  const queues = []
-  // Invoke GET method to retrieve initial list of queues information
-  const first = await freeclimb.api.queues.getList()
-  queues.push(...first.queues)
-  // Get Uri for next page
-  let nextPageUri = first.nextPageUri
-  // Retrieve entire queues list 
-  while (nextPageUri) {
-    const nextPage = await freeclimb.api.queues.getNextPage(nextPageUri)
-    queues.push(...nextPage.queues)
-    nextPageUri = nextPage.nextPageUri
-  }
+  const queues = await freeclimb.getQueues()
+  /**
+   * At the time of this writing, the freeclimb nodejs sdk (v3.0.1)
+   * generated via the openapi generator does not provide the facility for pagination
+   */
   return queues
 }

@@ -1,10 +1,11 @@
 require('dotenv').config()
-const freeclimbSDK = require('@freeclimb/sdk')
+const { createConfiguration, DefaultApi } = require('@freeclimb/sdk')
 const accountId = process.env.ACCOUNT_ID
 const apiKey = process.env.API_KEY
-const freeclimb = freeclimbSDK(accountId, apiKey)
+const freeclimb = new DefaultApi(createConfiguration({ accountId, apiKey }))
+const recordingId = 'example recording id'
 
-freeclimb.api.recordings.stream(recordingId).then(stream => {
+freeclimb.streamARecordingFile(recordingId).then(stream => {
   stream.on('data', chunk => {
     console.log(`Received ${chunk.length} bytes of data.`)
   })

@@ -1,7 +1,7 @@
 require('dotenv').config()
 const express = require('express')
 const bodyParser = require('body-parser')
-const freeclimbSDK = require('@freeclimb/sdk')
+const { Say, Pause, PerclScript, GetDigits, Hangup } = require('@freeclimb/sdk')
 
 const app = express()
 app.use(bodyParser.json())
@@ -9,15 +9,14 @@ const port = process.env.PORT || 80
 // Where your app is hosted ex. www.myapp.com
 const host = process.env.HOST
 
-const freeclimb = freeclimbSDK()
 // Handles incoming calls
 app.post('/incomingCall', (req, res) => {
   // Create PerCL say script
-  const greeting = freeclimb.percl.say('Hello')
+  const greeting = new Say({ text: 'Hello' })
   // Create PerCL say script
-  const greetingPause = freeclimb.percl.pause(100)
+  const greetingPause = new Pause({ length: 100 })
   // Create PerCL say script
-  const promptForColor = freeclimb.percl.say('Please select a color. Enter one for green, two for red, and three for blue.')
+  const promptForColor = new Say({ text: 'Please select a color. Enter one for green, two for red, and three for blue.' })
   // Create options for getDigits script
   const options = {
     prompts: freeclimb.percl.build(promptForColor),
@@ -26,9 +25,9 @@ app.post('/incomingCall', (req, res) => {
     flushBuffer: true
   }
   // Create PerCL for getDigits script
-  const getDigits = freeclimb.percl.getDigits(`${host}/colorSelectionDone`, options)
+  const getDigits = new GetDigits({ actionUrl: `${host}/colorSelectionDone`, prompts: [promptForColor], maxDigits: 1, minDigits: 1, flushBuffer: true })
   // Build and respond with Percl script
-  const percl = freeclimb.percl.build(greeting, greetingPause, getDigits)
+  const percl = new PerclScript({ commands: [greeting, greetingPause, getDigits] }).build()
   res.status(200).json(percl)
 })
 
@@ -46,11 +45,11 @@ app.post('/colorSelectionDone', (req, res) => {
     }
     const color = colors[digits]
     let sayResponse = color ? `You selected ${color}` : 'you did not select a number between 1 and 3'
-    let say = freeclimb.percl.say(sayResponse)
+    let say = new Say({ text: sayResponse })
     // Create PerCL hangup script
-    const hangup = freeclimb.percl.hangup()
+    const hangup = new Hangup({})
     // Build PerCL script
-    const percl = freeclimb.percl.build(say, hangup)
+    const percl = new PerclScript({ commands: [say, hangup] }).build()
     // Repsond with PerCL scripts
     res.status(200).json(percl)
   }

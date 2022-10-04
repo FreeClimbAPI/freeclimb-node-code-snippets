@@ -1,8 +1,8 @@
 require('dotenv').config()
-const freeclimbSDK = require('@freeclimb/sdk')
+const { createConfiguration, DefaultApi, QueueRequest } = require('@freeclimb/sdk')
 const accountId = process.env.ACCOUNT_ID
 const apiKey = process.env.API_KEY
-const freeclimb = freeclimbSDK(accountId, apiKey)
+const freeclimb = new DefaultApi(createConfiguration({ accountId, apiKey }))
 
 // New queue options
 const options = {
@@ -11,7 +11,7 @@ const options = {
 }
 
 // Invoke the update queue resource
-freeclimb.api.queues.update(queueId, options).then(queue => {
+freeclimb.updateAQueue(queueId, new QueueRequest(options)).then(queue => {
   // Use updated Queue
 }).catch(err => {
   // Handle Errors

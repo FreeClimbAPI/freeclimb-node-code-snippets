@@ -2,32 +2,31 @@ require('dotenv').config()
 const express = require('express')
 const bodyParser = require('body-parser')
 const app = express()
-const freeclimbSDK = require('@freeclimb/sdk')
+const { Say, Pause, Hangup, PerclScript } = require('@freeclimb/sdk')
 
 app.use(bodyParser.json())
-var port = process.env.PORT || 80
-const freeclimb = freeclimbSDK()
+const port = process.env.PORT || 80
 
 // Handles incoming calls
 app.post('/incomingCall', (req, res) => {
 
   // Create PerCL say script 
-  const say = freeclimb.percl.say('Hello. Thank you for invoking the accept incoming call tutorial.')
+  const say = new Say({ text: 'Hello. Thank you for invoking the accept incoming call tutorial.' })
 
   // Create PerCL pause script with a duration of 100 milliseconds
-  const pause = freeclimb.percl.pause(100)
+  const pause = new Pause({ length: 100 })
 
   // Create PerCL say script
-  const sayGoodbye = freeclimb.percl.say('Goodbye')
+  const sayGoodbye = new Say({ text: 'Goodbye' })
 
   // Create PerCL hangup script
-  const hangup = freeclimb.percl.hangup()
+  const hangup = new Hangup({})
 
   // Build scripts
-  const percl = freeclimb.percl.build(say, pause, sayGoodbye, hangup)
+  const percl = new PerclScript({ commands: [say, pause, sayGoodbye, hangup] })
 
   // Convert PerCL container to JSON and append to response
-  res.status(200).json(percl)
+  res.status(200).json(percl.build())
 })
 
 // Specify this route with 'Status Callback URL' in App Config
