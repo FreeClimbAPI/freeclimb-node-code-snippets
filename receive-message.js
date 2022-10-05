@@ -14,7 +14,7 @@ app.post('/incomingSms', (req, res) => {
   const toNumber = 'example to number'
   const fromNumber = 'example from number'
 
-  freeclimb.sendAnSmsMessage(new MessageRequest({ fromNumber, toNumber, text: 'Hey! It is your application!' })).catch(err => {console.log(err)})
+  freeclimb.sendAnSmsMessage(new MessageRequest({ _from: fromNumber, to: toNumber, text: 'Hey! It is your application!' })).catch(err => {console.log(err)})
 })
 
 // Specify this route with 'Status Callback URL' in App Config
