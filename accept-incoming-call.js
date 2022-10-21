@@ -22,11 +22,8 @@ app.post('/incomingCall', (req, res) => {
   // Create PerCL hangup script
   const hangup = new Hangup({})
 
-  // Build scripts
-  const percl = new PerclScript({ commands: [say, pause, sayGoodbye, hangup] })
-
   // Convert PerCL container to JSON and append to response
-  res.status(200).json(percl.build())
+  res.status(200).json(new PerclScript({ commands: [say, pause, sayGoodbye, hangup] }).build())
 })
 
 // Specify this route with 'Status Callback URL' in App Config
