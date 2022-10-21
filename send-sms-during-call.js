@@ -3,21 +3,23 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const app = express()
 app.use(bodyParser.json())
-const freeclimbSDK = require('@freeclimb/sdk')
+const { createConfiguration, DefaultApi, Sms, PerclScript } = require('@freeclimb/sdk')
 
 const port = process.env.PORT || 80
 const host = process.env.HOST
 const accountId = process.env.ACCOUNT_ID
 const apiKey = process.env.API_KEY
-const freeclimb = freeclimbSDK(accountId, apiKey)
+const freeclimb = new DefaultApi(createConfiguration({ accountId, apiKey }))
 
 app.post('/incomingCall', (req, res) => {
-  const options = {
-    notificationUrl: `${host}/notificationUrl`
-  }
   // Create sms PerCL that sends sms to current caller using the number handling the request
-  const smsCommand = freeclimb.percl.sms(req.body.to, req.body.from, 'Incoming Phone Call', options)
-  const percl = freeclimb.percl.build(smsCommand)
+  const smsCommand = new Sms({
+    to: req.body.to,
+    _from: req.body.from,
+    text: 'Incoming Phone Call',
+    notificationUrl: `${host}/notificationUrl`
+  })
+  const percl = new PerclScript({ commands: [smsCommand] }).build()
   res.status(200).json(percl)
 })
 
