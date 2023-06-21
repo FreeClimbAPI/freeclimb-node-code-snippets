@@ -20,7 +20,7 @@ freeclimb.makeACall(toNumber, fromNumber, applicationId).catch(err => {/* Handle
 
 // Handles incoming calls. Set with 'Call Connect URL' in App Config
 app.post('/incomingCall', (req, res) => {
-  const play = new Play({ recordingUrl: '/path/to/recording/url' })
+  const play = new Play({ file: '/path/to/recording/url' })
   const percl = new PerclScript({ commands: [play] }).build()
   res.status(200).json(percl)
 })
