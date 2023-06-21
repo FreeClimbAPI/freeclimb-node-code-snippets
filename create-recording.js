@@ -32,7 +32,7 @@ app.post('/incomingCall', (req, res) => {
 app.post('/finishedRecording', (req, res) => {
   const recordingResponse = req.body
   const say = new Say({ text: 'This is what you have recorded' })
-  const play = new Play({ recordingUrl:  recordingResponse.recordingUrl })
+  const play = new Play({ file:  recordingResponse.recordingUrl })
   const goodbye = new Say({ text: 'Goodbye' })
   const percl = new PerclScript({ commands: [say, play, goodbye] }).build()
   res.status(200).json(percl)
