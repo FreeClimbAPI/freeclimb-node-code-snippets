@@ -1,6 +1,7 @@
 {
   "name": "freeclimb-node-code-snippets",
   "version": "1.0.0",
+  "license":"MIT",
   "dependencies": {
     "@freeclimb/sdk": "^3.0.1",
     "body-parser": "^1.19.0",
